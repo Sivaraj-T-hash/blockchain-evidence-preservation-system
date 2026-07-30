@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Evidence History - E-Preserve Blockchain System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <!-- Back Navigation -->
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-secondary-custom mb-4">
+            <i class="fa-solid fa-arrow-left me-2"></i>Back to Registry Dashboard
+        </a>
+
+        <!-- Header Panel -->
+        <div class="card glass-panel border-0 p-4 mb-4 bg-white">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <span class="text-muted d-block small uppercase fw-bold">BLOCK HISTORY AUDIT FOR EVIDENCE:</span>
+                    <h2 class="h3 fw-bold text-dark mb-0 font-monospace">{{ evidence_id }}</h2>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <span class="badge bg-light border text-dark p-2">
+                        <i class="fa-solid fa-cube me-1 text-primary" style="color: var(--primary-color) !important;"></i> {{ history|length }} Blocks in Chain
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanatory note on append-only mechanism -->
+        <div class="alert alert-info border-0 bg-info bg-opacity-5 text-dark glass-panel p-3 mb-5" style="border-left: 4px solid var(--info-color) !important; background: #ffffff;">
+            <div class="d-flex">
+                <i class="fa-solid fa-circle-info text-info fs-4 me-3 mt-1"></i>
+                <div>
+                    <h5 class="alert-heading text-info fw-bold mb-1" style="font-size: 0.95rem;">Append-Only Trail Architecture</h5>
+                    <p class="mb-0 small text-muted">
+                        In traditional databases, clerical errors are overwritten (destroying evidence trace). Here, all adjustments are appended as new cryptographically signed events. If a "CORRECTION" block is present, it corrects the active representation of the evidence, but the historical "INITIAL" block remains permanently preserved for judicial audit.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Timeline -->
+        <div class="blockchain-timeline">
+            {% for block in history %}
+                <div class="blockchain-block">
+                    <div class="card glass-panel border-0 block-card {% if block.block_type == 'INITIAL' %}initial{% elif block.block_type == 'CORRECTION' %}correction{% else %}system{% endif %} p-4 p-md-5 bg-white">
+                        
+                        <!-- Block Info Header -->
+                        <div class="d-flex flex-wrap align-items-center justify-content-between g-2 mb-4">
+                            <div class="d-flex align-items-center">
+                                <span class="badge {% if block.block_type == 'INITIAL' %}badge-initial{% elif block.block_type == 'CORRECTION' %}badge-correction{% else %}badge-custody{% endif %} me-2">
+                                    <i class="fa-solid {% if block.block_type == 'INITIAL' %}fa-file-shield{% elif block.block_type == 'CORRECTION' %}fa-file-pen{% else %}fa-box-archive{% endif %} me-1"></i>
+                                    {{ block.block_type }} EVENT
+                                </span>
+                                <span class="text-muted small">Sequence Block ID: <code class="text-dark fw-bold">#{{ block.id }}</code></span>
+                            </div>
+                            <span class="text-secondary small">
+                                <i class="fa-regular fa-clock me-1"></i>{{ block.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                            </span>
+                        </div>
+
+                        <!-- Block Body -->
+                        <div class="row g-4 mb-4">
+                            <!-- Left: Item Specifications -->
+                            <div class="col-md-7">
+                                <h4 class="h6 text-muted mb-2 uppercase fw-bold" style="font-size: 0.75rem;">ITEM SPECIFICATION</h4>
+                                <div class="text-dark fw-semibold mb-3" style="white-space: pre-line;">{{ block.item_description }}</div>
+                                
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <span class="text-muted d-block small">Logged Count:</span>
+                                        <span class="text-dark fw-bold fs-5">{{ block.count }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted d-block small">Dimensions/Weight:</span>
+                                        <span class="text-dark fw-semibold">{{ block.size }}</span>
+                                    </div>
+                                </div>
+
+                                {% if block.evidence_file %}
+                                    <div class="mt-4 pt-3 border-top">
+                                        <h4 class="h6 text-muted mb-2 uppercase fw-bold" style="font-size: 0.75rem;">ATTACHED EVIDENCE</h4>
+                                        {% if block.evidence_file_type == 'image' %}
+                                            <div class="d-inline-block">
+                                                <img src="{{ url_for('static', filename='uploads/' + block.evidence_file) }}" class="img-thumbnail rounded shadow-sm" style="max-height: 150px; cursor: pointer; transition: transform 0.2s;" onclick="openImageModal(this.src)" alt="Evidence Attachment">
+                                                <span class="d-block text-muted small mt-1" style="font-size: 0.7rem;"><i class="fa-solid fa-magnifying-glass-plus"></i> Click image to expand</span>
+                                            </div>
+                                        {% elif block.evidence_file_type == 'document' %}
+                                            <a href="{{ url_for('static', filename='uploads/' + block.evidence_file) }}" class="btn btn-sm btn-outline-danger rounded px-3" target="_blank">
+                                                <i class="fa-solid fa-file-pdf me-1"></i> Download Case Document
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('static', filename='uploads/' + block.evidence_file) }}" class="btn btn-sm btn-outline-secondary rounded px-3" target="_blank">
+                                                <i class="fa-solid fa-paperclip me-1"></i> Download File Attachment
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Right: Officer/Court Order details -->
+                            <div class="col-md-5 border-start border-light-subtle ps-md-4">
+                                <h4 class="h6 text-muted mb-2 uppercase fw-bold" style="font-size: 0.75rem;">AUTHENTICATING OFFICER</h4>
+                                <span class="text-dark d-block small fw-bold"><i class="fa-solid fa-user-tie text-muted me-1"></i>{{ block.officer_details.split(' - ')[0] }}</span>
+                                <span class="text-muted d-block small mb-3">{{ block.officer_details.split(' - ')[1] }}</span>
+
+                                {% if block.district %}
+                                    <h4 class="h6 text-muted mb-1 uppercase fw-bold mt-2" style="font-size: 0.75rem;">SEIZURE DISTRICT</h4>
+                                    <span class="badge bg-light border text-dark mb-3" style="font-size:.8rem;">
+                                        <i class="fa-solid fa-map-pin me-1" style="color:var(--primary-color);"></i>{{ block.district }}, Tamil Nadu
+                                    </span>
+                                {% endif %}
+                                
+                                {% if block.block_type == 'CORRECTION' %}
+                                    <div class="mt-4 p-3 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                                        <span class="text-warning fw-bold d-block small mb-1" style="color: var(--warning-color) !important;"><i class="fa-solid fa-gavel me-1"></i> COURT ORDER REFERENCE</span>
+                                        <span class="text-dark small font-monospace fw-bold">{{ block.court_order_number }}</span>
+                                        
+                                        <span class="text-warning fw-bold d-block small mt-2 mb-1" style="color: var(--warning-color) !important;"><i class="fa-solid fa-notes-medical me-1"></i> AMENDMENT JUSTIFICATION</span>
+                                        <p class="text-muted mb-0 small" style="font-size: 0.8rem;">{{ block.correction_notes }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Cryptographic Links (Footer of block) -->
+                        <div class="border-top border-light-subtle pt-3 mt-4">
+                            <div class="row g-3">
+                                <div class="col-lg-6">
+                                    <div class="hash-label">Previous Block Hash</div>
+                                    <div class="hash-text text-secondary" style="background: #f8fafc;">{{ block.previous_hash }}</div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="hash-label text-primary" style="color: var(--primary-color) !important;">Current Block Hash</div>
+                                    <div class="hash-text text-dark" style="border-color: rgba(249, 115, 22, 0.2); background: #f8fafc;">{{ block.hash }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

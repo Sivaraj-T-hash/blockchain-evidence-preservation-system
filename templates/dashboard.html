@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - E-Preserve Blockchain System{% endblock %}
+
+{% block content %}
+<!-- Welcome & Quick Stats Header -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-3 mb-lg-0">
+        <h1 class="text-dark fw-extrabold mb-1">
+            Welcome, {{ current_user.fullname }}
+        </h1>
+        <p class="text-muted">
+            You are authorized under role: <span class="badge {% if current_user.role == 'Admin' %}badge-admin{% elif current_user.role == 'Forensic Staff' %}badge-correction{% elif current_user.role == 'Evidence Room Officer' %}badge-custody{% else %}badge-initial{% endif %}">{{ current_user.role }}</span>. 
+            All submissions will be permanently hashed and appended to the immutable system ledger.
+        </p>
+    </div>
+    {% if current_user.role in ['Police', 'Forensic Staff', 'Evidence Room Officer'] %}
+        <div class="col-lg-4 d-flex align-items-center justify-content-lg-end">
+            <a href="{{ url_for('log_evidence') }}" class="btn btn-primary-custom py-3 px-4 shadow">
+                <i class="fa-solid fa-plus-circle me-2"></i>Log Initial Evidence
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Search Filtering Card -->
+<div class="card glass-panel search-card border-0 p-4 mb-4 bg-white">
+    <form action="{{ url_for('dashboard') }}" method="GET">
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="custom-label"><i class="fa-solid fa-magnifying-glass me-1"></i>Keyword / Case ID</label>
+                <input type="text" class="form-control custom-input" name="search"
+                       placeholder="Case ID, officer, year, or keywords (e.g. Glock, laptop)..."
+                       value="{{ search_query or '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="custom-label"><i class="fa-solid fa-map-location-dot me-1"></i>District (Tamil Nadu)</label>
+                <select class="form-select custom-input" name="district">
+                    <option value="">— All Districts —</option>
+                    {% for d in tn_districts %}
+                        <option value="{{ d }}" {% if district_filter == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="custom-label"><i class="fa-regular fa-calendar me-1"></i>Date From</label>
+                <input type="date" class="form-control custom-input" name="date_from" value="{{ date_from or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="custom-label"><i class="fa-regular fa-calendar-check me-1"></i>Date To</label>
+                <input type="date" class="form-control custom-input" name="date_to" value="{{ date_to or '' }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary-custom flex-fill py-2">
+                    <i class="fa-solid fa-filter me-1"></i>Filter
+                </button>
+                {% if search_query or district_filter or date_from or date_to %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary-custom py-2 px-3">
+                        <i class="fa-solid fa-xmark"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Stats Counter Rows -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card glass-panel border-0 p-3 d-flex flex-row align-items-center bg-white">
+            <div class="bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded p-3 me-3" style="font-size: 1.5rem; color: var(--primary-color) !important;">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <div>
+                <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Active Cases</span>
+                <span class="fs-4 fw-bold text-dark">{{ evidence_list|length }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card glass-panel border-0 p-3 d-flex flex-row align-items-center bg-white">
+            <div class="bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded p-3 me-3" style="font-size: 1.5rem; color: var(--warning-color) !important;">
+                <i class="fa-solid fa-file-signature"></i>
+            </div>
+            <div>
+                <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Corrected Records</span>
+                <span class="fs-4 fw-bold text-dark">
+                    {{ evidence_list|selectattr('has_corrections', 'equalto', True)|list|length }}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card glass-panel border-0 p-3 d-flex flex-row align-items-center bg-white">
+            <div class="bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded p-3 me-3" style="font-size: 1.5rem; color: var(--success-color) !important;">
+                <i class="fa-solid fa-link"></i>
+            </div>
+            <div>
+                <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Ledger Blocks</span>
+                <span class="fs-4 fw-bold text-dark">
+                    {% if evidence_list %}
+                        {{ (evidence_list|sum(attribute='history_count')) + 1 }}
+                    {% else %}
+                        1
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card glass-panel border-0 p-3 d-flex flex-row align-items-center bg-white">
+            <div class="bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded p-3 me-3" style="font-size: 1.5rem; color: var(--info-color) !important;">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Integrity Shield</span>
+                <span class="fs-5 fw-bold text-success"><i class="fa-solid fa-circle-check me-1"></i> ACTIVE</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Registry List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card glass-panel border-0 p-4 bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                <h3 class="h4 text-dark mb-0"><i class="fa-solid fa-table-list text-primary me-2" style="color: var(--primary-color) !important;"></i>Active Evidence Registry</h3>
+                <span class="text-muted small">Showing current verified states of all logged items</span>
+            </div>
+
+            {% if not evidence_list %}
+                <div class="text-center py-5">
+                    <span class="fs-1 text-muted d-block mb-3">📂</span>
+                    <h5 class="text-muted">No evidence records found</h5>
+                    <p class="text-muted small mb-0">Try clearing filters or log initial items by clicking the "Log Initial Evidence" button above.</p>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle border-0" style="--bs-table-bg: transparent; --bs-table-hover-bg: rgba(249, 115, 22, 0.02);">
+                        <thead>
+                            <tr class="text-muted border-bottom" style="border-color: var(--card-border) !important;">
+                                <th>Evidence ID</th>
+                                <th>Attached File</th>
+                                <th>Description</th>
+                                <th>District</th>
+                                <th>Measurements</th>
+                                <th>Latest Event</th>
+                                <th>Last Officer</th>
+                                <th>Chain Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in evidence_list %}
+                                <tr class="border-bottom" style="border-color: var(--card-border) !important;">
+                                    <td>
+                                        <code class="text-primary font-monospace fw-bold" style="font-size: 0.95rem; color: var(--primary-color) !important;">{{ item.evidence_id }}</code>
+                                    </td>
+                                    <td>
+                                        {% if item.latest_block.evidence_file %}
+                                            {% if item.latest_block.evidence_file_type == 'image' %}
+                                                <img src="{{ url_for('static', filename='uploads/' + item.latest_block.evidence_file) }}" class="evidence-thumb" alt="Thumbnail" onclick="openImageModal(this.src)" style="cursor: pointer; width: 45px; height: 45px;">
+                                            {% elif item.latest_block.evidence_file_type == 'document' %}
+                                                <a href="{{ url_for('static', filename='uploads/' + item.latest_block.evidence_file) }}" class="btn btn-sm btn-outline-danger p-1 py-0 d-inline-flex align-items-center" target="_blank" title="Download Document" style="font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-file-pdf me-1"></i> Doc
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('static', filename='uploads/' + item.latest_block.evidence_file) }}" class="btn btn-sm btn-outline-secondary p-1 py-0 d-inline-flex align-items-center" target="_blank" style="font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-paperclip me-1"></i> File
+                                                </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted small">None</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="d-block fw-semibold text-dark">{{ item.latest_block.item_description }}</span>
+                                        {% if item.has_corrections %}
+                                            <span class="text-warning small d-block" style="font-size: 0.75rem; color: var(--warning-color) !important;"><i class="fa-solid fa-clock-rotate-left me-1"></i> Amended by Court Order</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.latest_block.district %}
+                                            <span class="badge bg-light border text-dark" style="font-size:.75rem;">
+                                                <i class="fa-solid fa-map-pin me-1" style="color:var(--primary-color);"></i>{{ item.latest_block.district }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="text-dark small d-block">Count: <strong>{{ item.latest_block.count }}</strong></span>
+                                        <span class="text-secondary small">Size: {{ item.latest_block.size }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if item.latest_block.block_type == 'INITIAL' %}badge-initial{% elif item.latest_block.block_type == 'CORRECTION' %}badge-correction{% else %}badge-custody{% endif %} mb-1">
+                                            {{ item.latest_block.block_type }}
+                                        </span>
+                                        <span class="text-muted d-block small" style="font-size: 0.7rem;">{{ item.latest_block.timestamp.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-dark small d-block fw-semibold">{{ item.latest_block.officer_details.split(' - ')[0] }}</span>
+                                        <span class="text-muted small" style="font-size: 0.7rem;">{{ item.latest_block.officer_details.split(' - ')[1] }}</span>
+                                    </td>
+                                    <td>
+                                        {% if item.has_corrections %}
+                                            <span class="text-warning small fw-bold" style="color: var(--warning-color) !important;"><i class="fa-solid fa-arrows-split-up-and-left me-1"></i> Corrected Log</span>
+                                        {% else %}
+                                            <span class="text-success small fw-bold" style="color: var(--success-color) !important;"><i class="fa-solid fa-shield me-1"></i> Genesis Unaltered</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-2">
+                                            <a href="{{ url_for('evidence_history', evidence_id=item.evidence_id) }}" class="btn btn-sm btn-secondary-custom px-3">
+                                                <i class="fa-solid fa-history me-1"></i> Audit Trail ({{ item.history_count }})
+                                            </a>
+                                            {% if current_user.role in ['Police', 'Forensic Staff', 'Evidence Room Officer'] %}
+                                                <a href="{{ url_for('request_correction', evidence_id=item.evidence_id) }}" class="btn btn-sm btn-outline-warning px-3 border border-warning border-opacity-25" style="background: rgba(217,119,6,0.05); color: var(--warning-color) !important;">
+                                                    <i class="fa-solid fa-file-pen me-1"></i> Correct
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

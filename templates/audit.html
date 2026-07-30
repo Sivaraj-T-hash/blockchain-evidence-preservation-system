@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Admin Audit Board - E-Preserve Blockchain System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Back Navigation -->
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-secondary-custom mb-4">
+            <i class="fa-solid fa-arrow-left me-2"></i>Back to Registry Dashboard
+        </a>
+
+        <!-- Audit Board Title -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between g-2 mb-4">
+            <div>
+                <h1 class="text-dark fw-extrabold mb-1">Blockchain Security Audit Board</h1>
+                <p class="text-muted">Perform cryptographic hashing audits to verify transaction sequencing integrity</p>
+            </div>
+            
+            <!-- Controls for Tamper Simulation & Restoration -->
+            <div class="d-inline-flex gap-2">
+                <button id="tamper-btn" class="btn btn-outline-danger px-3 border-danger border-opacity-25" style="background: rgba(220,38,38,0.05); color: var(--danger-color) !important;">
+                    <i class="fa-solid fa-bug me-1 text-danger"></i> Simulate DB Tampering
+                </button>
+                <button id="restore-btn" class="btn btn-primary-custom px-3">
+                    <i class="fa-solid fa-wrench me-1"></i> Restore Integrity
+                </button>
+            </div>
+        </div>
+
+        <!-- Integrity Secure/Compromised Banner -->
+        {% if status.is_secure %}
+            <div class="secure-banner shadow-sm">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-20 text-success border border-success border-opacity-25 rounded-circle" style="width: 40px; height: 40px; font-size: 1.2rem; color: var(--success-color) !important;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="text-start">
+                    <h5 class="text-success fw-bold mb-0" style="color: var(--success-color) !important;">System Integrity Verified: SECURE</h5>
+                    <p class="text-muted mb-0 small">All blocks recalculate correctly and point sequentially to their respective previous hash. No direct DB manipulation detected.</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="secure-banner compromised shadow">
+                <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-20 text-danger border border-danger border-opacity-25 rounded-circle" style="width: 40px; height: 40px; font-size: 1.2rem; color: var(--danger-color) !important;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="text-start">
+                    <h5 class="text-danger fw-bold mb-0" style="color: var(--danger-color) !important;">Security Violation Detected: CHAIN BROKEN</h5>
+                    <p class="text-dark mb-0 small fw-semibold">A block has been modified directly in the database. Recalculated cryptographic signatures do not match the database state!</p>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Block Ledger Log Grid -->
+        <div class="card glass-panel border-0 p-4 bg-white">
+            <h3 class="h5 text-dark mb-4"><i class="fa-solid fa-cube text-primary me-2" style="color: var(--primary-color) !important;"></i>Global System Ledger (Blockchain Database Logs)</h3>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border-0" style="--bs-table-bg: transparent; --bs-table-hover-bg: rgba(249, 115, 22, 0.02);">
+                    <thead>
+                        <tr class="text-muted border-bottom" style="border-color: var(--card-border) !important;">
+                            <th style="width: 80px;">Block ID</th>
+                            <th>Evidence ID</th>
+                            <th>Event Type</th>
+                            <th>Block Hash Logged</th>
+                            <th>Integrity Check</th>
+                            <th>Link Connection</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for block in status.log %}
+                            <tr class="border-bottom {% if not block.block_valid %}table-danger table-opacity-10{% endif %}" style="border-color: var(--card-border) !important;">
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-dark font-monospace fw-bold px-2 py-1">#{{ block.id }}</span>
+                                </td>
+                                <td>
+                                    <code class="text-secondary font-monospace fw-bold">{{ block.evidence_id }}</code>
+                                </td>
+                                <td>
+                                    {% if block.block_type == 'INITIAL' %}
+                                        <span class="badge badge-initial">INITIAL</span>
+                                    {% elif block.block_type == 'CORRECTION' %}
+                                        <span class="badge badge-correction">CORRECTION</span>
+                                    {% elif block.block_type == 'SYSTEM' %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 badge-custom" style="color: var(--info-color) !important;">SYSTEM</span>
+                                    {% else %}
+                                        <span class="badge badge-custody">{{ block.block_type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="font-monospace text-muted small" style="font-size: 0.75rem;">
+                                        {% if block.hash_valid %}
+                                            <span class="text-success fw-bold" style="color: var(--success-color) !important;"><i class="fa-regular fa-circle-check me-1"></i>{{ block.db_hash[:20] }}...{{ block.db_hash[-10:] }}</span>
+                                        {% else %}
+                                            <span class="text-danger fw-bold" style="color: var(--danger-color) !important;"><i class="fa-solid fa-circle-xmark me-1"></i>{{ block.db_hash[:20] }}...{{ block.db_hash[-10:] }}</span>
+                                            <div class="text-warning font-monospace mt-1" style="font-size: 0.7rem; color: var(--warning-color) !important;">
+                                                Calculated: {{ block.calculated_hash[:20] }}...{{ block.calculated_hash[-10:] }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if block.hash_valid %}
+                                        <span class="text-success small fw-bold" style="color: var(--success-color) !important;"><i class="fa-solid fa-check-circle me-1"></i> Valid Signature</span>
+                                    {% else %}
+                                        <span class="text-danger small fw-bold" style="color: var(--danger-color) !important;"><i class="fa-solid fa-times-circle me-1"></i> Tampered Data!</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if block.link_valid %}
+                                        <span class="text-success small fw-bold" style="color: var(--success-color) !important;"><i class="fa-solid fa-link me-1"></i> Connected to #{{ block.id - 1 }}</span>
+                                    {% else %}
+                                        <span class="text-danger small fw-bold" style="color: var(--danger-color) !important;"><i class="fa-solid fa-link-slash me-1"></i> Broken Link!</span>
+                                        <div class="text-warning font-monospace mt-1" style="font-size: 0.7rem; color: var(--warning-color) !important;">
+                                            Expected prev: {{ block.expected_previous[:12] }}...
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

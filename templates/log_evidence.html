@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Log Initial Evidence - E-Preserve Blockchain System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <!-- Back Navigation -->
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-secondary-custom mb-4">
+            <i class="fa-solid fa-arrow-left me-2"></i>Back to Registry Dashboard
+        </a>
+
+        <!-- Main Form Card -->
+        <div class="card glass-panel border-0 p-4 p-md-5 bg-white">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-circle p-3 me-3" style="width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                    <i class="fa-solid fa-folder-plus"></i>
+                </div>
+                <div>
+                    <h2 class="h4 text-dark mb-0 fw-bold">Log New Evidence Block</h2>
+                    <span class="text-muted small">Register item with automatic cryptographic signing</span>
+                </div>
+            </div>
+
+            <!-- Immutable Warning Block -->
+            <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-dark shadow-sm mb-4" style="border-left: 4px solid var(--warning-color) !important;">
+                <h5 class="alert-heading text-warning fw-bold mb-1" style="font-size: 0.95rem; color: var(--warning-color) !important;">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> IMMUTABILITY WARNING:
+                </h5>
+                <p class="mb-0 small text-muted">
+                    Once submitted, this entry is logically hashed into the blockchain ledger. **Direct edits or deletions are structurally impossible**. Clerical corrections will require submitting a corrective transaction referencing a valid Court Order number.
+                </p>
+            </div>
+
+            <form action="{{ url_for('log_evidence') }}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                
+                <div class="mb-4">
+                    <label for="item_description" class="custom-label">
+                        <i class="fa-solid fa-file-lines me-2"></i>Item Description
+                    </label>
+                    <textarea class="form-control custom-input" id="item_description" name="item_description" rows="4" placeholder="Detailed physical description of the evidence (e.g. 'One silver Apple iPhone 13 Pro Max with cracked screen, serial number ...')" required></textarea>
+                    <div class="invalid-feedback">
+                        Please provide a description of the evidence item.
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label for="count" class="custom-label">
+                            <i class="fa-solid fa-cubes me-2"></i>Quantity / Unit Count
+                        </label>
+                        <input type="number" class="form-control custom-input" id="count" name="count" min="1" placeholder="e.g. 1" required>
+                        <div class="invalid-feedback">
+                            Please provide a valid quantity (minimum 1).
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="size" class="custom-label">
+                            <i class="fa-solid fa-weight-hanging me-2"></i>Dimensions / Size / Weight
+                        </label>
+                        <input type="text" class="form-control custom-input" id="size" name="size" placeholder="e.g. 240g, 16cm x 7cm" required>
+                        <div class="invalid-feedback">
+                            Please specify the dimensions or weight of the item.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- District Field -->
+                <div class="mb-4">
+                    <label for="district" class="custom-label">
+                        <i class="fa-solid fa-map-location-dot me-2"></i>Seizure District (Tamil Nadu)
+                    </label>
+                    <select class="form-select custom-input" id="district" name="district">
+                        <option value="">— Select District —</option>
+                        {% for d in tn_districts %}
+                            <option value="{{ d }}">{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="text-muted d-block mt-1" style="font-size:0.75rem;">Select the Tamil Nadu district where the evidence was seized.</span>
+                </div>
+
+                <!-- New File Attachment Section -->
+                <div class="mb-4">
+                    <label for="evidence_file" class="custom-label">
+                        <i class="fa-solid fa-paperclip me-2"></i>Upload File Attachment (Picture or Document)
+                    </label>
+                    <input type="file" class="form-control custom-input" id="evidence_file" name="evidence_file" accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx">
+                    <span class="text-muted d-block mt-1" style="font-size: 0.75rem;">Supported formats: images (JPG, PNG, WEBP), PDFs, documents, text files.</span>
+                </div>
+
+                <div class="border-top pt-4 mt-5 d-flex gap-3 justify-content-end">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary-custom px-4 py-2">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary-custom px-4 py-2">
+                        <i class="fa-solid fa-signature me-2"></i>Sign & Append Block
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable Bootstrap client-side validations
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+</script>
+{% endblock %}

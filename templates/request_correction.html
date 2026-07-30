@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Request Evidence Correction - E-Preserve Blockchain System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-9 mx-auto">
+        <!-- Back Navigation -->
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-secondary-custom mb-4">
+            <i class="fa-solid fa-arrow-left me-2"></i>Back to Registry Dashboard
+        </a>
+
+        <!-- Split View: Original Details vs Corrective Inputs -->
+        <div class="row g-4">
+            <!-- Left Side: Latest Logged Block Reference -->
+            <div class="col-lg-5">
+                <div class="card glass-panel border-0 p-4 h-100 bg-white">
+                    <h3 class="h5 text-dark mb-3"><i class="fa-solid fa-file-invoice text-warning me-2" style="color: var(--warning-color) !important;"></i>Latest Block Reference</h3>
+                    <p class="text-muted small">This is the current registered state for Evidence ID:</p>
+                    <code class="text-primary fs-5 font-monospace fw-bold mb-4 d-block" style="color: var(--primary-color) !important;">{{ evidence.evidence_id }}</code>
+                    
+                    <hr class="border-secondary opacity-25">
+                    
+                    <div class="mb-3">
+                        <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Description:</span>
+                        <div class="text-dark small p-2 rounded bg-light border">{{ evidence.item_description }}</div>
+                    </div>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Count:</span>
+                            <span class="text-dark fw-bold">{{ evidence.count }}</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Size:</span>
+                            <span class="text-dark fw-bold">{{ evidence.size }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Last Custodian:</span>
+                        <span class="text-secondary small d-block">{{ evidence.officer_details }}</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Seizure District:</span>
+                        {% if evidence.district %}
+                            <span class="badge bg-light border text-dark" style="font-size:.75rem;">
+                                <i class="fa-solid fa-map-pin me-1" style="color:var(--primary-color);"></i>{{ evidence.district }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted small">— Not specified</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Timestamp:</span>
+                        <span class="text-secondary small d-block">{{ evidence.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}</span>
+                    </div>
+                    
+                    {% if evidence.evidence_file %}
+                        <div class="mb-3">
+                            <span class="text-muted d-block small uppercase fw-bold" style="font-size: 0.75rem;">Current Attachment:</span>
+                            {% if evidence.evidence_file_type == 'image' %}
+                                <img src="{{ url_for('static', filename='uploads/' + evidence.evidence_file) }}" class="evidence-thumb mt-1 shadow-sm" alt="Evidence File" onclick="openImageModal(this.src)" style="cursor: pointer; width: 60px; height: 60px;">
+                            {% else %}
+                                <a href="{{ url_for('static', filename='uploads/' + evidence.evidence_file) }}" class="btn btn-sm btn-outline-secondary mt-1" target="_blank">
+                                    <i class="fa-solid fa-file-pdf text-danger me-1"></i> View Document
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-auto">
+                        <div class="hash-label">Latest Block Hash</div>
+                        <div class="hash-text small" style="font-size: 0.75rem;">{{ evidence.hash }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Corrective Append Form -->
+            <div class="col-lg-7">
+                <div class="card glass-panel border-0 p-4 p-md-5 bg-white">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-circle p-3 me-3" style="width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--warning-color) !important;">
+                            <i class="fa-solid fa-file-signature"></i>
+                        </div>
+                        <div>
+                            <h2 class="h4 text-dark mb-0 fw-bold">Request Log Amendment</h2>
+                            <span class="text-muted small">Submit an append-only corrective transaction</span>
+                        </div>
+                    </div>
+
+                    <!-- Informational Alert -->
+                    <div class="alert alert-info border-0 bg-info bg-opacity-10 text-dark shadow-sm mb-4" style="border-left: 4px solid var(--info-color) !important;">
+                        <p class="mb-0 small text-muted">
+                            <i class="fa-solid fa-info-circle me-1 text-info"></i> <strong>Note:</strong> The system will append a new corrective block. The previous block remains completely unaltered in history, ensuring full auditing visibility.
+                        </p>
+                    </div>
+
+                    <form action="{{ url_for('request_correction', evidence_id=evidence.evidence_id) }}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        
+                        <div class="mb-4">
+                            <label for="court_order_number" class="custom-label text-warning" style="color: var(--warning-color) !important;">
+                                <i class="fa-solid fa-gavel me-2"></i>Court Order Reference Number <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control custom-input border-warning border-opacity-50" id="court_order_number" name="court_order_number" placeholder="e.g. Authorized by Court Order #CO-2026-894B" required autocomplete="off">
+                            <div class="invalid-feedback">
+                                A valid Court Order reference is mandatory for all amendments.
+                            </div>
+                            <span class="text-muted d-block mt-1" style="font-size: 0.75rem;">This entry must be legally backed by a valid judicial authorization directive.</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="item_description" class="custom-label">
+                                <i class="fa-solid fa-file-lines me-2"></i>Amended Item Description
+                            </label>
+                            <textarea class="form-control custom-input" id="item_description" name="item_description" rows="3" required>{{ evidence.item_description }}</textarea>
+                            <div class="invalid-feedback">
+                                Please specify the corrected description.
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="count" class="custom-label">
+                                    <i class="fa-solid fa-cubes me-2"></i>Amended Quantity
+                                </label>
+                                <input type="number" class="form-control custom-input" id="count" name="count" min="1" value="{{ evidence.count }}" required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid quantity.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="size" class="custom-label">
+                                    <i class="fa-solid fa-weight-hanging me-2"></i>Amended Size/Weight
+                                </label>
+                                <input type="text" class="form-control custom-input" id="size" name="size" value="{{ evidence.size }}" required>
+                                <div class="invalid-feedback">
+                                    Please enter the amended size metrics.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- District field -->
+                        <div class="mb-4">
+                            <label for="district" class="custom-label">
+                                <i class="fa-solid fa-map-location-dot me-2"></i>Seizure District (Tamil Nadu)
+                            </label>
+                            <select class="form-select custom-input" id="district" name="district">
+                                <option value="">— Select District —</option>
+                                {% for d in tn_districts %}
+                                    <option value="{{ d }}" {% if evidence.district == d %}selected{% endif %}>{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Optional File Upload Section -->
+                        <div class="mb-4">
+                            <label for="evidence_file" class="custom-label">
+                                <i class="fa-solid fa-paperclip me-2"></i>New File Attachment (Leaves unchanged if blank)
+                            </label>
+                            <input type="file" class="form-control custom-input" id="evidence_file" name="evidence_file" accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx">
+                            <span class="text-muted d-block mt-1" style="font-size: 0.75rem;">Upload new photo or report if required for this amendment.</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="correction_notes" class="custom-label">
+                                <i class="fa-solid fa-notes-medical me-2"></i>Reason for Correction / Justification
+                            </label>
+                            <textarea class="form-control custom-input" id="correction_notes" name="correction_notes" rows="3" placeholder="Provide notes regarding the correction reasons, who initiated it, and the clerical oversight details..." required></textarea>
+                            <div class="invalid-feedback">
+                                Please explain the reason for this corrective record.
+                            </div>
+                        </div>
+
+                        <div class="border-top pt-4 mt-5 d-flex gap-3 justify-content-end">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary-custom px-4 py-2">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning px-4 py-2 text-white fw-bold" style="background: var(--warning-color); border: none;">
+                                <i class="fa-solid fa-signature me-2"></i>Sign & Append Correction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable Bootstrap client-side validations
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+</script>
+{% endblock %}

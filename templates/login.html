@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Secure Authentication — E-Preserve System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 72vh;">
+    <div class="col-md-5 col-lg-4">
+
+        <!-- Shield Icon -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle shadow-sm mb-3"
+                 style="width:88px; height:88px; font-size:2.4rem;
+                        background: linear-gradient(135deg, #f97316, #c2410c);">
+                <i class="fa-solid fa-vault text-white"></i>
+            </div>
+            <h2 class="fw-bold text-dark mb-1">Authorized Access Only</h2>
+            <p class="text-muted small mb-0">This system is restricted to authorized law enforcement personnel.</p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'danger' else ('success' if category == 'success' else 'info') }} alert-dismissible fade show mb-4 border-0 rounded-3 shadow-sm" role="alert">
+                        <i class="fa-solid {% if category == 'danger' %}fa-triangle-exclamation{% elif category == 'success' %}fa-circle-check{% else %}fa-circle-info{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Login Form Card -->
+        <div class="card glass-panel shadow-lg border-0 p-4 p-md-5 bg-white">
+            <form action="{{ url_for('secret_login') }}" method="POST" autocomplete="off">
+                <div class="mb-4">
+                    <label for="username" class="custom-label">
+                        <i class="fa-solid fa-user-shield me-2"></i>Username
+                    </label>
+                    <input type="text" class="form-control custom-input" id="username"
+                           name="username" placeholder="Enter badge username" required autocomplete="off">
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="custom-label">
+                        <i class="fa-solid fa-key me-2"></i>Secret Key
+                    </label>
+                    <div class="input-group">
+                        <input type="password" class="form-control custom-input" id="password"
+                               name="password" placeholder="••••••••" required id="pwd-field">
+                        <button class="btn btn-outline-secondary" type="button"
+                                onclick="togglePwd()" title="Show/hide password">
+                            <i class="fa-solid fa-eye" id="pwd-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary-custom w-100 py-3 mt-2">
+                    <i class="fa-solid fa-unlock-keyhole me-2"></i>Authenticate Session
+                </button>
+            </form>
+        </div>
+
+        <!-- Quick-fill buttons (only visible on this secure URL) -->
+        <div class="card border-0 shadow-sm mt-4 p-3 bg-white" style="border-radius:12px;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="small text-dark fw-bold">
+                    <i class="fa-solid fa-circle-nodes me-1" style="color:var(--primary-color);"></i>
+                    Quick Login
+                </span>
+                <span class="badge bg-secondary-subtle text-dark-emphasis" style="font-size:.65rem;">Authorized Accounts</span>
+            </div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <button onclick="fillCredentials('sivaraj','sivaraj123')"
+                            class="btn btn-sm w-100 p-2 text-start d-flex flex-column align-items-start"
+                            style="background:#fff5f0;border:1px solid #fdd5be;border-radius:8px;font-size:.8rem;">
+                        <span class="fw-bold" style="color:#c2410c;">
+                            <i class="fa-solid fa-user-tie me-1"></i>Sivaraj T
+                        </span>
+                        <span class="text-muted font-monospace mt-1" style="font-size:.72rem;">Admin · sivaraj123</span>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button onclick="fillCredentials('jeffy','jeffy123')"
+                            class="btn btn-sm w-100 p-2 text-start d-flex flex-column align-items-start"
+                            style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:.8rem;">
+                        <span class="fw-bold text-warning">
+                            <i class="fa-solid fa-flask me-1"></i>Jeffy R
+                        </span>
+                        <span class="text-muted font-monospace mt-1" style="font-size:.72rem;">Forensic · jeffy123</span>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button onclick="fillCredentials('vignesh','vignesh123')"
+                            class="btn btn-sm w-100 p-2 text-start d-flex flex-column align-items-start"
+                            style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:.8rem;">
+                        <span class="fw-bold text-success">
+                            <i class="fa-solid fa-box-archive me-1"></i>Vignesh K
+                        </span>
+                        <span class="text-muted font-monospace mt-1" style="font-size:.72rem;">Evidence Officer · vignesh123</span>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button onclick="fillCredentials('meena','meena123')"
+                            class="btn btn-sm w-100 p-2 text-start d-flex flex-column align-items-start"
+                            style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;font-size:.8rem;">
+                        <span class="fw-bold text-primary">
+                            <i class="fa-solid fa-building-shield me-1"></i>Meena S
+                        </span>
+                        <span class="text-muted font-monospace mt-1" style="font-size:.72rem;">Police · meena123</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-center text-muted mt-4" style="font-size:.75rem;">
+            <i class="fa-solid fa-lock me-1"></i>
+            All access attempts are logged and auditable on the blockchain ledger.
+        </p>
+    </div>
+</div>
+
+<script>
+function togglePwd() {
+    const f = document.getElementById('password');
+    const e = document.getElementById('pwd-eye');
+    if (f.type === 'password') {
+        f.type = 'text';
+        e.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        f.type = 'password';
+        e.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+
+function fillCredentials(user, pass) {
+    document.getElementById('username').value = user;
+    document.getElementById('password').value = pass;
+    document.getElementById('username').focus();
+}
+</script>
+{% endblock %}

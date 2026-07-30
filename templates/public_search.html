@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}E-Preserve | Public Evidence Verification Portal{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-9 text-center">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle shadow mb-4"
+             style="width:90px; height:90px; font-size:2.5rem; background: linear-gradient(135deg,#f97316,#ea580c);">
+            🛡️
+        </div>
+        <h1 class="fw-extrabold mb-2" style="font-size:2.6rem; color:var(--text-primary);">E-Preserve Evidence Registry</h1>
+        <p class="text-muted fs-5 mb-0">Tamil Nadu Blockchain-Secured Evidence Preservation System</p>
+        <p class="text-muted small mt-1">Search, verify and trace the chain of custody for any registered evidence case</p>
+    </div>
+</div>
+
+<!-- Search Card -->
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-10">
+        <div class="card glass-panel shadow-lg border-0 p-4 bg-white search-card">
+            <h3 class="h5 fw-bold text-dark mb-4">
+                <i class="fa-solid fa-magnifying-glass me-2" style="color:var(--primary-color);"></i>
+                Public Case Verification Search
+            </h3>
+            <form action="{{ url_for('public_search') }}" method="GET">
+                <!-- Row 1: Keyword + District -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="custom-label"><i class="fa-solid fa-keyboard me-1"></i>Keyword / Case ID</label>
+                        <input type="text" class="form-control custom-input" name="query"
+                               value="{{ query }}"
+                               placeholder="Enter Case ID, officer name, or keywords (e.g. Glock, laptop)...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="custom-label"><i class="fa-solid fa-map-location-dot me-1"></i>District (Tamil Nadu)</label>
+                        <select class="form-select custom-input" name="district">
+                            <option value="">— All Districts —</option>
+                            {% for d in tn_districts %}
+                                <option value="{{ d }}" {% if district_filter == d %}selected{% endif %}>{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <!-- Row 2: Date range -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="custom-label"><i class="fa-regular fa-calendar me-1"></i>Date From</label>
+                        <input type="date" class="form-control custom-input" name="date_from" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="custom-label"><i class="fa-regular fa-calendar-check me-1"></i>Date To</label>
+                        <input type="date" class="form-control custom-input" name="date_to" value="{{ date_to }}">
+                    </div>
+                </div>
+                <!-- Buttons -->
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-primary-custom px-5 py-2">
+                        <i class="fa-solid fa-search me-2"></i>Search Evidence Records
+                    </button>
+                    {% if has_any_filter %}
+                        <a href="{{ url_for('public_search') }}" class="btn btn-secondary-custom px-4 py-2">
+                            <i class="fa-solid fa-xmark me-1"></i>Clear Filters
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Active Filters Summary -->
+{% if has_any_filter %}
+<div class="row justify-content-center mb-3">
+    <div class="col-lg-10">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-muted small fw-bold">Active Filters:</span>
+            {% if query %}<span class="badge bg-primary-subtle text-dark border px-3 py-2"><i class="fa-solid fa-tag me-1"></i>Keyword: {{ query }}</span>{% endif %}
+            {% if district_filter %}<span class="badge bg-orange-subtle text-dark border px-3 py-2" style="background:rgba(249,115,22,0.1)!important;"><i class="fa-solid fa-map-pin me-1"></i>District: {{ district_filter }}</span>{% endif %}
+            {% if date_from %}<span class="badge bg-secondary-subtle text-dark border px-3 py-2"><i class="fa-regular fa-calendar me-1"></i>From: {{ date_from }}</span>{% endif %}
+            {% if date_to %}<span class="badge bg-secondary-subtle text-dark border px-3 py-2"><i class="fa-regular fa-calendar-check me-1"></i>To: {{ date_to }}</span>{% endif %}
+            <span class="text-muted small ms-2">— {{ results|length }} case(s) found</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Results -->
+{% if has_any_filter %}
+    {% if not results %}
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card glass-panel border-0 p-5 text-center bg-white">
+                    <span class="fs-1 d-block mb-3">🔍</span>
+                    <h4 class="text-dark fw-bold">No evidence records match your search</h4>
+                    <p class="text-muted small">Try a different keyword, district, or date range.<br>
+                       Example searches: <code>Madurai</code> · <code>EV-2F10B8D9</code> · <code>Glock</code> · <code>2026</code></p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                {% for item in results %}
+                <div class="card glass-panel border-0 p-4 p-md-5 mb-4 bg-white">
+
+                    <!-- Case Header -->
+                    <div class="d-flex flex-wrap align-items-center justify-content-between border-bottom pb-3 mb-4">
+                        <div>
+                            <span class="text-muted small fw-bold">CASE EVIDENCE CODE</span>
+                            <h3 class="h4 font-monospace fw-bold mb-0 mt-1" style="color:var(--primary-color);">
+                                {{ item.evidence_id }}
+                            </h3>
+                        </div>
+                        <div class="text-end mt-2 mt-sm-0 d-flex flex-column align-items-end gap-1">
+                            <span class="badge {% if item.has_corrections %}badge-correction{% else %}badge-initial{% endif %}">
+                                {% if item.has_corrections %}<i class="fa-solid fa-clock-rotate-left me-1"></i> Amended{% else %}<i class="fa-solid fa-shield me-1"></i> Original{% endif %}
+                            </span>
+                            {% if item.latest_block.district %}
+                                <span class="badge bg-light border text-dark">
+                                    <i class="fa-solid fa-map-pin me-1" style="color:var(--primary-color);"></i>{{ item.latest_block.district }}
+                                </span>
+                            {% endif %}
+                            <span class="text-muted small" style="font-size:.75rem;">{{ item.history_count }} Block(s)</span>
+                        </div>
+                    </div>
+
+                    <!-- Current State -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-7">
+                            <h5 class="h6 text-muted fw-bold mb-2" style="font-size:.75rem; text-transform:uppercase;">Current Description</h5>
+                            <p class="text-dark fw-semibold mb-3" style="white-space:pre-line;">{{ item.latest_block.item_description }}</p>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <span class="text-muted d-block small">Count:</span>
+                                    <span class="text-dark fw-bold fs-5">{{ item.latest_block.count }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-muted d-block small">Size/Weight:</span>
+                                    <span class="text-dark fw-semibold small">{{ item.latest_block.size }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5 border-start border-light-subtle ps-md-4 d-flex flex-column">
+                            <h5 class="h6 text-muted fw-bold mb-2" style="font-size:.75rem; text-transform:uppercase;">Custodian</h5>
+                            <p class="text-dark mb-1 small fw-bold">
+                                <i class="fa-solid fa-user-circle text-muted me-1"></i>
+                                {{ item.latest_block.officer_details.split(' - ')[0] }}
+                            </p>
+                            <span class="text-muted small d-block mb-3">{{ item.latest_block.officer_details.split(' - ')[1] }}</span>
+                            <span class="text-muted small">Logged: {{ item.latest_block.timestamp.strftime('%d %b %Y, %H:%M UTC') }}</span>
+
+                            {% if item.latest_block.evidence_file and item.latest_block.evidence_file_type == 'image' %}
+                                <div class="mt-3 pt-2 border-top">
+                                    <span class="text-muted small d-block mb-1"><i class="fa-solid fa-paperclip me-1"></i>Attachment:</span>
+                                    <img src="{{ url_for('static', filename='uploads/' + item.latest_block.evidence_file) }}"
+                                         class="evidence-thumb shadow-sm" style="cursor:pointer;"
+                                         onclick="openImageModal(this.src)" alt="Evidence">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Collapsible chain trail -->
+                    <div>
+                        <button class="btn btn-secondary-custom btn-sm w-100 py-2" type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#trail-{{ item.evidence_id }}"
+                                aria-expanded="false">
+                            <i class="fa-solid fa-route me-1"></i>
+                            View Cryptographic Chain of Custody &amp; Audit Trail ({{ item.history_count }} Blocks)
+                        </button>
+                        <div class="collapse mt-3" id="trail-{{ item.evidence_id }}">
+                            <div class="p-3 bg-light rounded border">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa-solid fa-database text-warning me-1"></i>Sequential Blockchain Logs
+                                </h6>
+                                <div class="blockchain-timeline">
+                                    {% for block in item.history %}
+                                    <div class="blockchain-block">
+                                        <div class="card border-0 shadow-sm p-3 bg-white"
+                                             style="border-left: 4px solid {% if block.block_type == 'INITIAL' %}#059669{% elif block.block_type == 'CORRECTION' %}#d97706{% else %}#2563eb{% endif %} !important;">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                                                <span class="badge {% if block.block_type == 'INITIAL' %}badge-initial{% elif block.block_type == 'CORRECTION' %}badge-correction{% else %}badge-custody{% endif %}">
+                                                    {{ block.block_type }} EVENT
+                                                </span>
+                                                <span class="text-muted small" style="font-size:.75rem;">
+                                                    <i class="fa-regular fa-clock me-1"></i>{{ block.timestamp.strftime('%d %b %Y, %H:%M UTC') }}
+                                                </span>
+                                            </div>
+                                            {% if block.district %}
+                                                <span class="badge bg-light border text-dark mb-2" style="font-size:.7rem;">
+                                                    <i class="fa-solid fa-map-pin me-1" style="color:var(--primary-color);"></i>{{ block.district }}
+                                                </span>
+                                            {% endif %}
+                                            <p class="text-dark small mb-2"><strong>Specification:</strong> {{ block.item_description }}</p>
+                                            <p class="text-muted small mb-2"><strong>Signatory:</strong> {{ block.officer_details }}</p>
+                                            {% if block.block_type == 'CORRECTION' %}
+                                                <div class="bg-warning bg-opacity-10 p-2 rounded border border-warning-subtle mb-2">
+                                                    <span class="text-warning fw-bold d-block small" style="font-size:.7rem; color:var(--warning-color)!important;">
+                                                        <i class="fa-solid fa-gavel me-1"></i> Court Order #{{ block.court_order_number }}
+                                                    </span>
+                                                    <span class="text-muted d-block small" style="font-size:.7rem;">{{ block.correction_notes }}</span>
+                                                </div>
+                                            {% endif %}
+                                            {% if block.evidence_file and block.evidence_file_type == 'image' %}
+                                                <img src="{{ url_for('static', filename='uploads/' + block.evidence_file) }}"
+                                                     class="evidence-thumb mb-2" style="cursor:pointer; max-width:70px; max-height:70px;"
+                                                     onclick="openImageModal(this.src)" alt="Attachment">
+                                            {% endif %}
+                                            <div class="border-top pt-2 mt-2">
+                                                <div class="row g-1">
+                                                    <div class="col-md-6">
+                                                        <span class="hash-label d-block">Prev Hash</span>
+                                                        <span class="font-monospace text-muted" style="font-size:.65rem;">{{ block.previous_hash[:16] }}...{{ block.previous_hash[-10:] }}</span>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <span class="hash-label d-block" style="color:var(--primary-color);">Block Hash</span>
+                                                        <span class="font-monospace text-success fw-bold" style="font-size:.65rem;">
+                                                            <i class="fa-solid fa-circle-check me-1"></i>{{ block.hash[:16] }}...{{ block.hash[-10:] }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+<!-- No search yet — show quick stats -->
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card glass-panel bg-white border-0 p-4 text-center">
+                    <div class="fs-2 mb-2">🔐</div>
+                    <h5 class="fw-bold text-dark mb-1">Immutable Records</h5>
+                    <p class="text-muted small mb-0">Every evidence entry is cryptographically hashed and cannot be altered once written to the blockchain ledger.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card glass-panel bg-white border-0 p-4 text-center">
+                    <div class="fs-2 mb-2">📍</div>
+                    <h5 class="fw-bold text-dark mb-1">District-wise Tracking</h5>
+                    <p class="text-muted small mb-0">All 38 Tamil Nadu districts are indexed. Filter cases by the exact district where evidence was seized.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card glass-panel bg-white border-0 p-4 text-center">
+                    <div class="fs-2 mb-2">📅</div>
+                    <h5 class="fw-bold text-dark mb-1">Date-range Filtering</h5>
+                    <p class="text-muted small mb-0">Narrow your search to a specific time window using the From / To date pickers above.</p>
+                </div>
+            </div>
+        </div>
+        <div class="card glass-panel bg-white border-0 p-4 text-center">
+            <h5 class="text-dark fw-bold mb-2">Quick Search Examples</h5>
+            <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+                {% set examples = [('EV-2F10B8D9','Case ID'), ('Madurai','District'), ('Glock','Keyword'), ('iPhone','Item'), ('2026','Year')] %}
+                {% for ex, label in examples %}
+                    <a href="{{ url_for('public_search', query=ex) }}"
+                       class="btn btn-sm btn-secondary-custom px-3 py-1">
+                        <i class="fa-solid fa-magnifying-glass me-1"></i>{{ ex }}
+                        <span class="text-muted ms-1" style="font-size:.7rem;">({{ label }})</span>
+                    </a>
+                {% endfor %}
+                <a href="{{ url_for('public_search', district='Chennai') }}"
+                   class="btn btn-sm btn-secondary-custom px-3 py-1">
+                    <i class="fa-solid fa-map-pin me-1" style="color:var(--primary-color);"></i>Chennai
+                    <span class="text-muted ms-1" style="font-size:.7rem;">(District)</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
