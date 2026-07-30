@@ -1,13 +1,13 @@
 # Blockchain-Based Evidence Preservation System
 
 ## Project Overview
-The **Blockchain-Based Evidence Preservation System** is a web-based law enforcement application designed to securely manage, track, and verify physical evidence collected during criminal investigations in Tamil Nadu. It allows authorized officers—including Police, Forensic Staff, and Evidence Room Officers—to log, amend, and audit evidence records while protecting data integrity using blockchain technology[cite: 1]. 
+The **Blockchain-Based Evidence Preservation System** is a web-based law enforcement application designed to securely manage, track, and verify physical evidence collected during criminal investigations in **Tamil Nadu**. It allows authorized officers—including Police, Forensic Staff, and Evidence Room Officers—to log, amend, and audit evidence records while protecting data integrity using blockchain technology. 
 
-Each evidence entry is linked using SHA-256 cryptographic hashes, making any unauthorized modification instantly detectable[cite: 1]. The public can independently verify the chain of custody through a dedicated Public Ledger Lookup portal, while internal access is restricted to authorized personnel through a hidden, role-based authentication gateway[cite: 1].
+Each evidence entry is linked using SHA-256 cryptographic hashes, making any unauthorized modification instantly detectable. The public can independently verify the chain of custody through a dedicated Public Ledger Lookup portal, while internal access is restricted to authorized personnel through a hidden, role-based authentication gateway[cite: 1].
 
 ---
 
-## Software Used[cite: 1]
+## Software Used
 
 | Software | Purpose |
 | :--- | :--- |
@@ -25,7 +25,7 @@ Each evidence entry is linked using SHA-256 cryptographic hashes, making any una
 
 ---
 
-## Project Modules[cite: 1]
+## Project Modules
 
 1. **Public Ledger Lookup (Landing Page)**[cite: 1]
    * Open to citizens, lawyers, and third-party auditors[cite: 1].
