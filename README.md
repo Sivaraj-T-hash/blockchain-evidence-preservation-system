@@ -188,8 +188,8 @@ Blockchain-Evidence-Preservation-System/
 🏫 Velammal Engineering College, Chennai
 
 - GitHub: https://github.com/Sivaraj-T-hash
-- LinkedIn: https://www.linkedin.com/in/sivaraj-t
-- Email: your-email@example.com
+- LinkedIn: https://www.linkedin.com/in/sivaraj04
+- Email: tsivaraj2007@gmail.com
 
 ---
 
